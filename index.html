@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Andrew Walker — Senior Product Designer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --black: #0c0c0c;
+            --charcoal: #1a1a1a;
+            --charcoal-light: #242424;
+            --gray-dark: #3a3a3a;
+            --gray: #6a6a6a;
+            --gray-light: #999999;
+            --white: #f0f0f0;
+            --white-dim: #cccccc;
+            --rule: #222222;
+            --hud: rgba(255,255,255,0.06);
+            --hud-line: rgba(255,255,255,0.1);
+            --hud-bright: rgba(255,255,255,0.25);
+            --font-display: 'Outfit', sans-serif;
+            --font-mono: 'IBM Plex Mono', monospace;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-display);
+            background: var(--black); color: var(--white);
+            -webkit-font-smoothing: antialiased; overflow-x: hidden;
+        }
+        /* Scanlines */
+        body::after {
+            content: ''; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.012) 2px, rgba(255,255,255,0.012) 4px);
+            pointer-events: none; z-index: 9999;
+        }
+
+        /* ===== NAV ===== */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 0 48px; height: 56px;
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(12,12,12,0.92); backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--rule);
+        }
+        .nav-left { display: flex; align-items: center; gap: 24px; }
+        .nav-logo {
+            font-weight: 700; font-size: 16px; letter-spacing: -0.5px;
+            color: var(--white); text-decoration: none; cursor: pointer;
+        }
+        .nav-role {
+            font-family: var(--font-mono); font-size: 10px;
+            color: var(--gray); letter-spacing: 0.5px;
+        }
+        .nav-links { display: flex; gap: 28px; list-style: none; }
+        .nav-links a {
+            font-family: var(--font-mono); font-size: 11px;
+            letter-spacing: 0.5px; text-transform: uppercase;
+            color: var(--gray); text-decoration: none; transition: color 0.2s;
+        }
+        .nav-links a:hover, .nav-links a.active { color: var(--white); }
+        .nav-toggle { display: none; background: none; border: none; cursor: pointer; padding: 8px; }
+        .nav-toggle span { display: block; width: 20px; height: 1.5px; background: var(--white); margin: 4px 0; }
+
+        /* ===== PAGE CONTAINER ===== */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ===== WORK PAGE (HOME) ===== */
+        .work-page { padding: 120px 48px 80px; max-width: 1100px; }
+        .work-intro {
+            font-size: clamp(20px, 2.5vw, 28px); font-weight: 400;
+            color: var(--gray-light); line-height: 1.55;
+            max-width: 720px; margin-bottom: 72px;
+        }
+        .work-intro strong { color: var(--white); font-weight: 600; }
+
+        /* Project cards — visual first */
+        .project-grid { display: flex; flex-direction: column; gap: 48px; }
+
+        .project-card {
+            cursor: pointer; position: relative;
+            transition: all 0.3s ease;
+        }
+        .project-card:hover { transform: translateY(-4px); }
+        .project-card:hover .project-img { border-color: var(--gray-dark); }
+        .project-card:hover .project-title { color: var(--white); }
+        .project-card:hover .project-num { color: var(--white); }
+
+        .project-img {
+            width: 100%; height: 420px;
+            background: var(--charcoal); border: 1px solid var(--rule);
+            display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden; transition: border-color 0.3s;
+            margin-bottom: 20px;
+        }
+        /* HUD corners on images */
+        .project-img::before, .project-img::after {
+            content: ''; position: absolute;
+            width: 20px; height: 20px;
+            border-color: var(--hud-bright); border-style: solid;
+            pointer-events: none; z-index: 1;
+        }
+        .project-img::before { top: 12px; left: 12px; border-width: 1px 0 0 1px; }
+        .project-img::after { bottom: 12px; right: 12px; border-width: 0 1px 1px 0; }
+        .project-img span {
+            font-family: var(--font-mono); font-size: 10px;
+            color: var(--gray-dark); letter-spacing: 0.5px; text-transform: uppercase;
+        }
+        .project-img .img-sys {
+            position: absolute; bottom: 16px; left: 20px;
+            font-family: var(--font-mono); font-size: 7px;
+            color: var(--gray-dark); letter-spacing: 1px;
+        }
+
+        .project-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; gap: 24px;
+        }
+        .project-title {
+            font-size: 24px; font-weight: 600; letter-spacing: -0.5px;
+            color: var(--white-dim); transition: color 0.2s; margin-bottom: 4px;
+        }
+        .project-type {
+            font-family: var(--font-mono); font-size: 10px;
+            letter-spacing: 0.5px; text-transform: uppercase; color: var(--gray);
+        }
+        .project-num {
+            font-family: var(--font-mono); font-size: 12px;
+            color: var(--gray-dark); transition: color 0.2s; flex-shrink: 0;
+        }
+
+        /* Lock icon for protected projects */
+        .project-lock {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-family: var(--font-mono); font-size: 9px;
+            color: var(--gray-dark); letter-spacing: 0.5px; text-transform: uppercase;
+            margin-top: 6px;
+        }
+        .project-lock::before { content: '◆'; font-size: 6px; }
+
+        /* ===== ABOUT PAGE ===== */
+        .about-page { padding: 120px 48px 80px; max-width: 900px; }
+        .about-intro {
+            font-size: clamp(20px, 2.5vw, 28px); font-weight: 400;
+            color: var(--gray-light); line-height: 1.55;
+            max-width: 680px; margin-bottom: 64px;
+        }
+        .about-intro strong { color: var(--white); font-weight: 600; }
+
+        .about-section { margin-bottom: 56px; }
+        .about-section-title {
+            font-family: var(--font-mono); font-size: 10px;
+            letter-spacing: 0.5px; text-transform: uppercase;
+            color: var(--gray); margin-bottom: 20px;
+            padding-bottom: 10px; border-bottom: 1px solid var(--rule);
+        }
+        .about-section-title::before { content: '// '; color: var(--gray-dark); }
+        .about-body {
+            font-size: 15px; font-weight: 300; color: var(--gray-light); line-height: 1.8;
+        }
+        .about-body p { margin-bottom: 16px; }
+        .about-body strong { color: var(--white); font-weight: 500; }
+
+        .about-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 1px; background: var(--rule);
+        }
+        .about-grid-item { background: var(--black); padding: 24px; }
+        .about-grid-item h4 {
+            font-size: 12px; font-weight: 500; text-transform: uppercase;
+            letter-spacing: 0.5px; color: var(--white); margin-bottom: 12px;
+        }
+        .about-grid-item li {
+            font-size: 13px; font-weight: 300; color: var(--gray-light);
+            list-style: none; padding: 5px 0;
+        }
+
+        /* Principles with HUD brackets */
+        .about-principles {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 1px; background: var(--rule); margin-top: 8px;
+        }
+        .about-principle {
+            background: var(--black); padding: 28px; position: relative;
+        }
+        .about-principle::before, .about-principle::after {
+            content: ''; position: absolute;
+            width: 14px; height: 14px;
+            border-color: var(--hud-bright); border-style: solid;
+        }
+        .about-principle::before { top: 10px; left: 10px; border-width: 1px 0 0 1px; }
+        .about-principle::after { bottom: 10px; right: 10px; border-width: 0 1px 1px 0; }
+        .about-principle .ap-num {
+            font-family: var(--font-mono); font-size: 9px;
+            color: var(--gray); margin-bottom: 12px;
+        }
+        .about-principle h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+        .about-principle p { font-size: 12px; font-weight: 300; color: var(--gray-light); line-height: 1.6; }
+
+        /* ===== CONTACT PAGE ===== */
+        .contact-page {
+            padding: 120px 48px 80px; max-width: 900px;
+            min-height: calc(100vh - 56px);
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .contact-page h1 {
+            font-size: clamp(36px, 5vw, 56px); font-weight: 700;
+            letter-spacing: -2px; margin-bottom: 20px;
+        }
+        .contact-page .contact-desc {
+            font-size: 17px; font-weight: 300; color: var(--gray-light);
+            line-height: 1.6; margin-bottom: 40px; max-width: 480px;
+        }
+        .contact-email-link {
+            font-size: clamp(20px, 3vw, 28px); font-weight: 600;
+            color: var(--white); text-decoration: none;
+            letter-spacing: -0.5px; transition: color 0.2s;
+            display: inline-block; margin-bottom: 32px;
+        }
+        .contact-email-link:hover { color: var(--gray-light); }
+        .contact-social {
+            display: flex; gap: 24px;
+        }
+        .contact-social a {
+            font-family: var(--font-mono); font-size: 11px;
+            letter-spacing: 0.5px; text-transform: uppercase;
+            color: var(--gray); text-decoration: none; transition: color 0.2s;
+        }
+        .contact-social a:hover { color: var(--white); }
+
+        /* ===== CASE STUDY PAGES ===== */
+        .cs-page { padding-top: 56px; }
+        .cs-hero-section { padding: 64px 48px 48px; max-width: 800px; }
+        .cs-back {
+            font-family: var(--font-mono); font-size: 11px;
+            letter-spacing: 0.5px; text-transform: uppercase;
+            color: var(--gray); text-decoration: none; cursor: pointer;
+            display: inline-block; margin-bottom: 48px; transition: color 0.2s;
+        }
+        .cs-back::before { content: '◂ '; font-size: 8px; }
+        .cs-back:hover { color: var(--white); }
+        .cs-hero-section h1 {
+            font-size: clamp(36px, 5vw, 52px); font-weight: 700;
+            letter-spacing: -2px; line-height: 1.05; margin-bottom: 20px;
+        }
+        .cs-hero-section .lead {
+            font-size: 17px; font-weight: 300; color: var(--gray-light);
+            line-height: 1.65; max-width: 620px; margin-bottom: 40px;
+        }
+        .cs-meta {
+            display: flex; gap: 48px; padding: 20px 0;
+            border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+            position: relative;
+        }
+        .cs-meta::after {
+            content: 'CASE//DATA'; font-family: var(--font-mono); font-size: 8px;
+            letter-spacing: 1px; color: var(--gray-dark);
+            position: absolute; top: 4px; right: 0;
+        }
+        .cs-meta-label {
+            font-family: var(--font-mono); font-size: 9px;
+            letter-spacing: 0.5px; text-transform: uppercase;
+            color: var(--gray); margin-bottom: 3px;
+        }
+        .cs-meta-value { font-size: 13px; font-weight: 400; color: var(--white-dim); }
+
+        .cs-body { max-width: 800px; padding: 0 48px 100px; }
+        .cs-body p {
+            font-size: 15px; font-weight: 300; color: var(--gray-light);
+            line-height: 1.75; margin-bottom: 16px;
+        }
+
+        /* Phase markers */
+        .phase {
+            margin-top: 64px; margin-bottom: 28px;
+            padding: 16px 0; border-top: 1px solid var(--rule);
+            display: flex; align-items: baseline; gap: 16px; position: relative;
+        }
+        .phase:first-child { margin-top: 48px; }
+        .phase::after { content: ''; position: absolute; top: 0; left: 0; width: 40px; height: 1px; background: var(--white); }
+        .phase-num { font-family: var(--font-mono); font-size: 10px; color: var(--white); min-width: 28px; }
+        .phase-title { font-size: 13px; font-weight: 500; color: var(--white); text-transform: uppercase; letter-spacing: 0.5px; }
+        .phase-sys { font-family: var(--font-mono); font-size: 8px; color: var(--gray-dark); letter-spacing: 1px; margin-left: auto; }
+
+        /* Metrics */
+        .metrics {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1px; background: var(--rule); margin: 36px 0; position: relative;
+        }
+        .metrics::before, .metrics::after { content: ''; position: absolute; width: 12px; height: 12px; border-color: var(--hud-bright); border-style: solid; pointer-events: none; z-index: 1; }
+        .metrics::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+        .metrics::after { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+        .metric { background: var(--charcoal); padding: 24px; text-align: center; }
+        .metric-val { font-size: 32px; font-weight: 700; color: var(--white); letter-spacing: -1px; line-height: 1; }
+        .metric-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--gray); margin-top: 8px; }
+        .metric-ctx { font-size: 11px; color: var(--gray-dark); margin-top: 4px; font-weight: 300; }
+
+        /* Two col */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--rule); margin: 32px 0; position: relative; }
+        .two-col::before, .two-col::after { content: ''; position: absolute; width: 10px; height: 10px; border-color: var(--hud-bright); border-style: solid; pointer-events: none; z-index: 1; }
+        .two-col::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+        .two-col::after { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+        .two-col .col { background: var(--charcoal); padding: 24px; }
+        .two-col .col h4 { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; color: var(--white); }
+        .two-col .col h4::before { content: '◇ '; font-size: 7px; color: var(--gray-dark); }
+        .two-col .col li { font-size: 13px; font-weight: 300; color: var(--gray-light); padding: 5px 0; list-style: none; padding-left: 14px; position: relative; }
+        .two-col .col li::before { content: '—'; position: absolute; left: 0; color: var(--gray-dark); font-size: 10px; }
+
+        /* Image blocks */
+        .img-block {
+            width: 100%; background: var(--charcoal); border: 1px solid var(--rule);
+            margin: 32px 0; display: flex; align-items: center; justify-content: center; position: relative;
+        }
+        .img-block::before, .img-block::after { content: ''; position: absolute; width: 24px; height: 24px; border-color: var(--hud-bright); border-style: solid; pointer-events: none; z-index: 1; }
+        .img-block::before { top: 8px; left: 8px; border-width: 1px 0 0 1px; }
+        .img-block::after { bottom: 8px; right: 8px; border-width: 0 1px 1px 0; }
+        .img-block.tall { height: 400px; }
+        .img-block.medium { height: 280px; }
+        .img-block span { font-family: var(--font-mono); font-size: 10px; color: var(--gray-dark); letter-spacing: 0.5px; text-transform: uppercase; }
+        .img-block .img-sys { position: absolute; bottom: 12px; left: 16px; font-family: var(--font-mono); font-size: 7px; color: var(--gray-dark); letter-spacing: 1px; }
+        .img-caption { font-family: var(--font-mono); font-size: 10px; color: var(--gray); margin-top: -24px; margin-bottom: 32px; }
+
+        /* Gallery */
+        .gallery { display: grid; gap: 1px; background: var(--rule); margin: 32px 0; }
+        .gallery.two { grid-template-columns: 1fr 1fr; }
+        .gallery.three { grid-template-columns: 1fr 1fr 1fr; }
+        .gallery .g-item { background: var(--charcoal); }
+        .gallery .g-visual { height: 200px; display: flex; align-items: center; justify-content: center; background: var(--charcoal-light); position: relative; }
+        .gallery .g-visual::before { content: ''; position: absolute; top: 6px; left: 6px; width: 12px; height: 12px; border-left: 1px solid var(--hud-bright); border-top: 1px solid var(--hud-bright); }
+        .gallery .g-visual span { font-family: var(--font-mono); font-size: 9px; color: var(--gray-dark); letter-spacing: 0.5px; text-transform: uppercase; }
+        .gallery .g-cap { padding: 12px 16px; font-size: 11px; font-weight: 300; color: var(--gray); }
+
+        /* Insight */
+        .insight { margin: 40px 0; padding: 32px 0 32px 24px; border-left: 2px solid var(--white); position: relative; }
+        .insight::before { content: '◎'; position: absolute; top: 32px; left: -8px; font-size: 12px; color: var(--gray-dark); }
+        .insight::after { content: 'INSIGHT//FLAGGED'; font-family: var(--font-mono); font-size: 7px; letter-spacing: 1.5px; color: var(--gray-dark); position: absolute; top: 12px; right: 0; }
+        .insight p { font-size: 19px !important; font-weight: 400 !important; color: var(--white) !important; line-height: 1.5 !important; font-style: italic; }
+        .insight cite { font-family: var(--font-mono); font-size: 10px; color: var(--gray); font-style: normal; letter-spacing: 0.5px; text-transform: uppercase; display: block; margin-top: 12px; }
+
+        /* Personas */
+        .personas { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--rule); margin: 32px 0; }
+        .persona { background: var(--charcoal); padding: 28px; position: relative; }
+        .persona::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; }
+        .persona.pa::before { background: var(--white); }
+        .persona.pb::before { background: var(--gray-dark); }
+        .persona-type { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+        .persona-type.ta { color: var(--white); }
+        .persona-type.tb { color: var(--gray); }
+        .persona h4 { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+        .persona .p-role { font-size: 12px; color: var(--gray); margin-bottom: 16px; }
+        .persona li { font-size: 12px; font-weight: 300; color: var(--gray-light); list-style: none; padding: 4px 0 4px 14px; position: relative; }
+        .persona li::before { content: '▹'; position: absolute; left: 0; font-size: 9px; color: var(--gray-dark); }
+
+        /* Process */
+        .process { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--rule); margin: 32px 0; }
+        .process-step { background: var(--charcoal); padding: 20px; position: relative; }
+        .process-step::after { content: '▸'; position: absolute; right: -5px; top: 50%; transform: translateY(-50%); font-size: 8px; color: var(--gray-dark); z-index: 1; }
+        .process-step:last-child::after { display: none; }
+        .ps-num { font-family: var(--font-mono); font-size: 9px; color: var(--gray); margin-bottom: 8px; }
+        .ps-title { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+        .ps-desc { font-size: 11px; font-weight: 300; color: var(--gray); line-height: 1.5; }
+
+        /* Before/After */
+        .ba { display: grid; grid-template-columns: 1fr 40px 1fr; gap: 0; margin: 32px 0; align-items: stretch; }
+        .ba-panel { background: var(--charcoal); border: 1px solid var(--rule); padding: 24px; position: relative; }
+        .ba-panel::before, .ba-panel::after { content: ''; position: absolute; width: 10px; height: 10px; border-color: var(--hud-bright); border-style: solid; }
+        .ba-panel::before { top: 6px; left: 6px; border-width: 1px 0 0 1px; }
+        .ba-panel::after { bottom: 6px; right: 6px; border-width: 0 1px 1px 0; }
+        .ba-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 12px; }
+        .ba-label.before { color: var(--gray); }
+        .ba-label.after { color: var(--white); }
+        .ba-visual { height: auto; min-height: 180px; background: var(--charcoal-light); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; padding: 20px; }
+        .ba-visual span { font-family: var(--font-mono); font-size: 9px; color: var(--gray-dark); text-transform: uppercase; letter-spacing: 0.5px; }
+        .ba-visual img { height: 198px; width: auto; display: block; margin: 0 auto; }
+        .ba-text { font-size: 12px; color: var(--gray-light); line-height: 1.6; font-weight: 300; }
+        .ba-arrow { display: flex; align-items: center; justify-content: center; color: var(--gray-dark); font-size: 18px; }
+
+        /* Next CS */
+        .cs-next { margin-top: 72px; padding-top: 36px; border-top: 1px solid var(--rule); cursor: pointer; }
+        .cs-next:hover .cs-next-title { color: var(--gray-light); padding-left: 8px; }
+        .cs-next-label { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.5px; text-transform: uppercase; color: var(--gray); margin-bottom: 6px; }
+        .cs-next-label::before { content: '▸ '; color: var(--gray-dark); }
+        .cs-next-title { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; color: var(--white); transition: all 0.2s; }
+
+        /* ===== PASSWORD MODAL ===== */
+        .pw-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(12,12,12,0.95); z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        .pw-overlay.show { display: flex; }
+        .pw-box {
+            width: 400px; max-width: 90vw; padding: 48px;
+            border: 1px solid var(--rule); background: var(--charcoal);
+            position: relative;
+        }
+        .pw-box::before, .pw-box::after {
+            content: ''; position: absolute; width: 16px; height: 16px;
+            border-color: var(--hud-bright); border-style: solid;
+        }
+        .pw-box::before { top: -1px; left: -1px; border-width: 1px 0 0 1px; }
+        .pw-box::after { bottom: -1px; right: -1px; border-width: 0 1px 1px 0; }
+        .pw-box .pw-close {
+            position: absolute; top: 16px; right: 16px;
+            font-family: var(--font-mono); font-size: 11px;
+            color: var(--gray); cursor: pointer; background: none; border: none;
+            transition: color 0.2s;
+        }
+        .pw-box .pw-close:hover { color: var(--white); }
+        .pw-box h3 {
+            font-size: 18px; font-weight: 600; margin-bottom: 8px;
+        }
+        .pw-box .pw-desc {
+            font-size: 13px; font-weight: 300; color: var(--gray-light);
+            margin-bottom: 28px; line-height: 1.5;
+        }
+        .pw-box .pw-sys {
+            font-family: var(--font-mono); font-size: 8px;
+            color: var(--gray-dark); letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+        .pw-input-wrap { position: relative; margin-bottom: 16px; }
+        .pw-input {
+            width: 100%; padding: 12px 16px;
+            font-family: var(--font-mono); font-size: 13px;
+            background: var(--black); border: 1px solid var(--rule);
+            color: var(--white); outline: none;
+            letter-spacing: 2px;
+            transition: border-color 0.2s;
+        }
+        .pw-input:focus { border-color: var(--gray-dark); }
+        .pw-input::placeholder { color: var(--gray-dark); letter-spacing: 0.5px; }
+        .pw-submit {
+            width: 100%; padding: 12px;
+            font-family: var(--font-mono); font-size: 11px;
+            letter-spacing: 1px; text-transform: uppercase;
+            background: var(--white); color: var(--black);
+            border: none; cursor: pointer; font-weight: 500;
+            transition: all 0.2s;
+        }
+        .pw-submit:hover { background: var(--gray-light); }
+        .pw-error {
+            font-family: var(--font-mono); font-size: 10px;
+            color: #ff4444; margin-top: 12px; display: none;
+            letter-spacing: 0.5px;
+        }
+        .pw-error.show { display: block; }
+
+        /* ===== FOOTER ===== */
+        footer {
+            padding: 32px 48px; border-top: 1px solid var(--rule);
+            display: flex; justify-content: space-between; align-items: center;
+            position: relative;
+        }
+        footer p { font-family: var(--font-mono); font-size: 10px; color: var(--gray-dark); }
+        .footer-center {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            font-family: var(--font-mono); font-size: 8px;
+            color: var(--gray-dark); letter-spacing: 1.5px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            body::after { display: none; }
+            nav { padding: 0 24px; }
+            .nav-role { display: none; }
+            .nav-links {
+                display: none; position: absolute; top: 100%; left: 0; right: 0;
+                background: rgba(12,12,12,0.97); flex-direction: column;
+                padding: 20px 24px; gap: 16px; border-bottom: 1px solid var(--rule);
+            }
+            .nav-links.open { display: flex; }
+            .nav-toggle { display: block; }
+            .work-page, .about-page, .contact-page { padding: 100px 24px 60px; }
+            .project-img { height: 260px; }
+            .about-grid { grid-template-columns: 1fr; }
+            .about-principles { grid-template-columns: 1fr; }
+            .cs-hero-section, .cs-body { padding-left: 24px; padding-right: 24px; }
+            .cs-meta { flex-wrap: wrap; gap: 20px; }
+            .two-col, .personas, .ba { grid-template-columns: 1fr; }
+            .ba { gap: 1px; }
+            .ba-arrow { transform: rotate(90deg); padding: 8px 0; }
+            .process { grid-template-columns: 1fr 1fr; }
+            .gallery.two, .gallery.three { grid-template-columns: 1fr; }
+            footer { padding: 24px; flex-direction: column; gap: 8px; }
+            .footer-center { position: static; transform: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-left">
+            <a class="nav-logo" onclick="goTo('work')">Andrew Walker</a>
+            <span class="nav-role">Product Designer</span>
+        </div>
+        <button class="nav-toggle" onclick="toggleNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+        <ul class="nav-links" id="navLinks">
+            <li><a onclick="goTo('work')" id="nav-work" class="active">Work</a></li>
+            <li><a onclick="goTo('about')" id="nav-about">About</a></li>
+            <li><a onclick="goTo('contact')" id="nav-contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <!-- ===== WORK PAGE ===== -->
+    <div class="page active" id="page-work">
+        <div class="work-page">
+            <p class="work-intro"><strong>I design for operational complexity at scale</strong> — crafting intentional experiences that prioritize clarity, speed, and purpose for the people who need it most. Below are a few examples of my work.</p>
+            <div class="project-grid">
+                <div class="project-card" onclick="goTo('cs-returns')">
+                    <div class="project-img">
+                        <span>[ Project image ] — 1408×840 @2x</span>
+                        <div class="img-sys">PREVIEW.001 // RETURNS</div>
+                    </div>
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">In-Store Returns Customer & Associate Experience</div>
+                            <div class="project-type">Case Study</div>
+                        </div>
+                        <span class="project-num">01</span>
+                    </div>
+                </div>
+                <div class="project-card" onclick="requestPW('pickup')">
+                    <div class="project-img">
+                        <span>[ Project image ] — 1408×840 @2x</span>
+                        <div class="img-sys">PREVIEW.002 // PICKUP</div>
+                    </div>
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">Store Pickup — Customer & Associate Strategy</div>
+                            <div class="project-type">Case Study</div>
+                            <div class="project-lock">Password Protected</div>
+                        </div>
+                        <span class="project-num">02</span>
+                    </div>
+                </div>
+                <div class="project-card" onclick="requestPW('pro')">
+                    <div class="project-img">
+                        <span>[ Project image ] — 1408×840 @2x</span>
+                        <div class="img-sys">PREVIEW.003 // PRO</div>
+                    </div>
+                    <div class="project-header">
+                        <div>
+                            <div class="project-title">Pro Fulfillment Hub Strategy</div>
+                            <div class="project-type">Case Study</div>
+                            <div class="project-lock">Password Protected</div>
+                        </div>
+                        <span class="project-num">03</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ABOUT PAGE ===== -->
+    <div class="page" id="page-about">
+        <div class="about-page">
+            <p class="about-intro"><strong>I'm a product designer with 8+ years of experience</strong> shaping complex operational experiences at one of the world's largest retailers — where my work impacts thousands of frontline operators and millions of customers daily.</p>
+
+            <div class="about-section">
+                <div class="about-section-title">Background</div>
+                <div class="about-body">
+                    <p>I specialize in translating operational complexity into clear, intuitive systems — from defining multi-year product visions to designing the micro-interactions that make a workflow feel effortless under pressure.</p>
+                    <p><strong>I'm looking for my next challenge in fast-paced, mission-critical contexts</strong> where design has immediate, tangible impact on people's ability to perform their work safely, quickly, and accurately.</p>
+                </div>
+            </div>
+
+            <div class="about-section">
+                <div class="about-section-title">Capabilities</div>
+                <div class="about-grid">
+                    <div class="about-grid-item"><h4>Design</h4><ul><li>End-to-end product strategy</li><li>Operational & service design</li><li>Mobile-first experiences</li><li>Multi-user workflow architecture</li></ul></div>
+                    <div class="about-grid-item"><h4>Research</h4><ul><li>Field observation & shadowing</li><li>User interviews & synthesis</li><li>Workshop facilitation</li><li>Stakeholder alignment</li></ul></div>
+                    <div class="about-grid-item"><h4>Tools</h4><ul><li>Figma, Sketch, Adobe CC</li><li>Miro, UserTesting, Maze</li><li>HTML/CSS prototyping</li></ul></div>
+                    <div class="about-grid-item"><h4>Domains</h4><ul><li>Enterprise operations</li><li>Retail & fulfillment</li><li>Frontline workforce</li><li>Complex systems at scale</li></ul></div>
+                </div>
+            </div>
+
+            <div class="about-section">
+                <div class="about-section-title">Design Principles</div>
+                <div class="about-principles">
+                    <div class="about-principle"><div class="ap-num">01</div><h3>Operator-First</h3><p>Design for the person in the moment — under pressure, divided attention, unpredictable environments.</p></div>
+                    <div class="about-principle"><div class="ap-num">02</div><h3>Systems Over Screens</h3><p>Design the system first — flows, handoffs, failure states — then refine the surface.</p></div>
+                    <div class="about-principle"><div class="ap-num">03</div><h3>Speed Through Clarity</h3><p>Every element earns its place. Reduce cognitive load so operators act with confidence.</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CONTACT PAGE ===== -->
+    <div class="page" id="page-contact">
+        <div class="contact-page">
+            <p class="section-label" style="margin-bottom: 20px;">// Get In Touch</p>
+            <h1>Let's connect.</h1>
+            <p class="contact-desc">I'm currently exploring opportunities in fast-paced, mission-driven environments. If my work resonates, I'd love to hear from you.</p>
+            <a href="mailto:andrew@example.com" class="contact-email-link">andrew@example.com</a>
+            <div class="contact-social">
+                <a href="#">LinkedIn</a>
+                <a href="#">Resume</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CS: RETURNS (PUBLIC) ===== -->
+    <div class="page" id="page-cs-returns">
+        <div class="cs-page">
+            <div class="cs-hero-section">
+                <a class="cs-back" onclick="goTo('work')">Back</a>
+                <p class="section-label">// Case Study 01</p>
+                <h1>In-Store Returns Customer & Associate Experience</h1>
+                <p class="lead">Crafted a 3–5 year, end-to-end strategic vision for In-Store Returns — consolidating 3 disparate return systems into one unified experience for associates while introducing new ways for customers to return items. This vision is still being executed on by other teams today.</p>
+                <div class="cs-meta">
+                    <div><div class="cs-meta-label">Role</div><div class="cs-meta-value">Staff UX Designer</div></div>
+                    <div><div class="cs-meta-label">Duration</div><div class="cs-meta-value">Jan 2024 – Feb 2025</div></div>
+                    <div><div class="cs-meta-label">Status</div><div class="cs-meta-value">Execution in progress</div></div>
+                </div>
+            </div>
+            <div class="cs-body">
+                <div class="phase"><span class="phase-num">01</span><span class="phase-title">The Problem</span><span class="phase-sys">SYS.ANALYSIS</span></div>
+                <p>Associates processing in-store returns were forced to navigate three separate systems. A legacy platform originally built for special orders handled one type of return. As order volumes grew and new systems were introduced, the legacy platform couldn't keep up — but it was never fully replaced. The result: associates had to diagnose every return that came in, interrogate the customer about the order's origin, and then figure out which of three systems could actually process it.</p>
+                <p>If they guessed wrong, they'd hit a dead end and have to start the entire process over in a different system. This wasn't an edge case — it was the daily reality for 40,000 service desk associates across 2,335 stores.</p>
+                <p>On top of the system fragmentation, the newer return system was missing business-critical features from the legacy platform it was meant to replace. And RTV (Return to Vendor) processing — which directly determines whether the company recovers costs on returned goods — was riddled with inaccuracies. Wrong RTV data doesn't just lose money on individual transactions; it gives vendors leverage in future negotiations.</p>
+                <p>The teams responsible for these systems had been working in silos for years, often building duplicative features or shipping work that directly conflicted with other teams' goals. There was no shared vision for what the returns experience should become.</p>
+                <div class="metrics">
+                    <div class="metric"><div class="metric-val">3</div><div class="metric-label">Disparate Systems</div><div class="metric-ctx">Associates navigated between</div></div>
+                    <div class="metric"><div class="metric-val">2.5 min</div><div class="metric-label">Avg Transaction Time</div><div class="metric-ctx">Per return at baseline</div></div>
+                    <div class="metric"><div class="metric-val">40K</div><div class="metric-label">Associates Impacted</div><div class="metric-ctx">Across 2,335 stores</div></div>
+                </div>
+
+                <div class="phase"><span class="phase-num">02</span><span class="phase-title">Discovery & Research</span><span class="phase-sys">SYS.RECON</span></div>
+                <p>Research wasn't a phase — it was a cadence. We were in stores 3–4 times a month, shadowing associates at the service desk, interviewing them between transactions, and watching how they actually handled returns in real time. We paired this with customer interviews, stakeholder workshops, and detailed journey mapping to build a full picture of the current state across both the associate and customer experience.</p>
+                <div class="two-col">
+                    <div class="col"><h4>Methods</h4><ul><li>In-store shadowing (3–4x/month)</li><li>Associate interviews</li><li>Customer interviews</li><li>Stakeholder workshops</li><li>Journey mapping</li></ul></div>
+                    <div class="col"><h4>Key Questions</h4><ul><li>Where do associates lose time diagnosing returns?</li><li>What forces system-switching mid-transaction?</li><li>How do experienced vs. new associates cope?</li><li>Where does the customer experience break down?</li></ul></div>
+                </div>
+                <div class="img-block tall"><span>[ Customer & associate journey map ] — 1408×800 @2x</span><div class="img-sys">IMG.001 // JOURNEY MAP</div></div>
+                <div class="img-caption">Journey maps connecting the customer and associate experience — used to align teams on a shared future vision</div>
+                <div class="insight">
+                    <p>"Associates weren't slow — the system was forcing them to be detectives. Every return required diagnosing the order origin before they could even begin processing it. One wrong guess meant starting over in a completely different system."</p>
+                    <cite>— Field research insight</cite>
+                </div>
+
+                <div class="phase"><span class="phase-num">03</span><span class="phase-title">The Operators</span><span class="phase-sys">SYS.PROFILE</span></div>
+                <p>Service desk associates are the ultimate multitaskers. Returns are just one of many responsibilities competing for their attention at any given moment — alongside order pickups, order management, customer service, locating products, checkout, and a phone that never stops ringing. They need tools that let them move fast and pivot instantly, not systems that force them to investigate before they can act.</p>
+                <div class="personas">
+                    <div class="persona pa"><div class="persona-type ta">Experienced Associate</div><h4>The Veteran</h4><div class="p-role">Service Desk Associate — 3+ years</div><ul><li>Developed workarounds and tribal knowledge to navigate legacy systems</li><li>Knew which system to use based on gut instinct and pattern recognition</li><li>Could compensate for system gaps but shouldn't have had to</li><li>Often became the informal trainer for newer associates</li></ul></div>
+                    <div class="persona pb"><div class="persona-type tb">New Associate</div><h4>The New Hire</h4><div class="p-role">Service Desk Associate — under 6 months</div><ul><li>Exposed to full complexity of three systems with no safety net</li><li>No tribal knowledge to fall back on — onboarding was a nightmare</li><li>Frequent dead ends and restarts led to frustration and longer transaction times</li><li>Customers felt the pain of their learning curve directly</li></ul></div>
+                </div>
+
+                <div class="phase"><span class="phase-num">04</span><span class="phase-title">Strategic Vision</span><span class="phase-sys">SYS.STRATEGY</span></div>
+                <p>The vision was structured as a 3–5 year phased roadmap with two parallel swimlanes: the associate experience and the customer experience. We had to start with the associate side — building a single, consolidated returns system — before we could unlock the customer-facing innovations that depended on it.</p>
+                <p>Getting alignment was the hardest part. These teams had worked in silos for years. Through a series of stakeholder workshops, we got cross-team buy-in on both the customer and associate vision, then worked backwards into a "North Star Phased Approach" that answered the question: how do we get there?</p>
+                <p>The biggest battle was securing continued investment. The new system had been in development for 5 years and still wasn't at feature parity with the legacy platform. Leadership was close to scrapping the entire effort — keeping the disparate systems on legacy code. By reframing the conversation around customer and associate impact, and the competitive risk of falling further behind as a retailer, we shifted sentiment and drove a 3x increase in funding the following year to bring three product teams onto the effort.</p>
+                <div class="img-block medium"><span>[ North Star phased roadmap ] — 1408×560 @2x</span><div class="img-sys">IMG.002 // NORTH STAR</div></div>
+                <div class="img-caption">North Star Phased Approach — aligning teams around a shared, sequenced vision</div>
+                <div class="process">
+                    <div class="process-step"><div class="ps-num">Phase 1</div><div class="ps-title">Consolidate</div><div class="ps-desc">Single returns system with integrated tendering and simplified RTV process</div></div>
+                    <div class="process-step"><div class="ps-num">Phase 2</div><div class="ps-title">Feature Parity</div><div class="ps-desc">Full overhaul of RTV with Return Allowance, standardized out-of-policy process</div></div>
+                    <div class="process-step"><div class="ps-num">Phase 3</div><div class="ps-title">Customer Identity</div><div class="ps-desc">Loyalty integration recognizing preferences, enabling expedited returns with no receipt required</div></div>
+                    <div class="process-step"><div class="ps-num">Phase 4</div><div class="ps-title">Mobile & Curbside</div><div class="ps-desc">Flexible returns anywhere — service desk, curbside, drive-through — initiated from customer's phone</div></div>
+                </div>
+
+                <div class="phase"><span class="phase-num">05</span><span class="phase-title">Design & Iteration</span><span class="phase-sys">SYS.BUILD</span></div>
+                <p>I was the original designer for the single consolidated returns system and led the concepting of future enhancements including product search — a feature that let associates find the right product when a customer didn't have a receipt. Before this, associates had to jump to a separate system and hunt for the product, often selecting the wrong one. Product search eliminated the need to leave the returns flow entirely.</p>
+                <p>The consolidation fundamentally simplified the associate's workflow. Instead of diagnosing order origins across three systems and hitting dead ends, every return now starts and finishes in one place.</p>
+                <p>The vision extended well beyond the service desk. We designed two distinct return journeys — each mapped as dual-swimlane flows showing how the customer and associate experiences connect at every touchpoint.</p>
+
+                <p><strong>Generic In-Store Return:</strong> The standard path. A customer walks in with an item, the associate identifies them through a loyalty program, looks up their purchase history, inspects the item, and processes the refund — all within a single system. Customer preferences like refund method are recognized automatically. No card present, no physical receipt required.</p>
+                <div class="img-block tall" style="height:auto;padding:0;overflow:hidden;"><img src="images/img_01.png" alt="Generic In-Store Return journey map" style="width:100%;height:auto;display:block;"><div class="img-sys">IMG.002 // GENERIC RETURN JOURNEY</div></div>
+                <div class="img-caption">Generic In-Store Return — dual-swimlane journey showing customer and associate touchpoints from initiation through refund</div>
+
+                <div class="ba">
+                    <div class="ba-panel">
+                        <div class="ba-label before">Before — 3 Systems</div>
+                        <div class="ba-visual"><img src="images/img_02.png" alt="Three disparate return systems"></div>
+                        <p class="ba-text">Open System 1 → Create return → Hit unsupported order type → Switch to System 2 → Create return → RTV error → Switch to System 3 → Create return → Process RTVs → Refund → Complete</p>
+                    </div>
+                    <div class="ba-arrow">→</div>
+                    <div class="ba-panel">
+                        <div class="ba-label after">After — 1 System</div>
+                        <div class="ba-visual"><img src="images/img_03.png" alt="Single consolidated return system"></div>
+                        <p class="ba-text">Open unified system → Create return → Product search if needed → Process RTVs → Refund → Complete</p>
+                    </div>
+                </div>
+
+
+
+
+                <p><strong>Mobile In-Store Return:</strong> The innovation layer. For customers returning oversized or bulky items — like cases of hardwood flooring — we designed a curbside return experience. The customer initiates the return online, parks in a designated space, and notifies the store they've arrived. The associate receives a notification, reviews the return details, brings a flatbed cart to the car, scans a QR code to start the process, and handles the entire return without the customer ever stepping inside the store.</p>
+                <p>This wasn't just a convenience play. It eliminated the physical burden of customers hauling heavy products through the store, reduced foot traffic at the service desk, and gave associates advance context on what was being returned before the customer even arrived.</p>
+                <div class="img-block tall" style="height:auto;padding:0;overflow:hidden;"><img src="images/img_04.png" alt="Mobile In-Store Return journey map" style="width:100%;height:auto;display:block;"><div class="img-sys" style="margin-top:-28px;position:relative;">IMG.003 // MOBILE RETURN JOURNEY</div></div>
+                <div class="img-caption">Mobile In-Store Return — curbside experience for oversized items, with associate-to-car workflow and QR code handoff</div>
+
+                <div class="gallery three">
+                    <div class="g-item"><div class="g-visual" style="height:auto;padding:16px;"><img src="images/img_05.png" alt="Purchase history and return initiation" style="height:260px;width:auto;display:block;margin:0 auto;border-radius:4px;"></div><div class="g-cap">Purchase history — initiating a return</div></div>
+                    <div class="g-item"><div class="g-visual" style="height:auto;padding:16px;"><img src="images/img_06.png" alt="Return in-store QR code" style="height:260px;width:auto;display:block;margin:0 auto;border-radius:4px;"></div><div class="g-cap">QR code for in-store return handoff</div></div>
+                    <div class="g-item"><div class="g-visual" style="height:auto;padding:16px;"><img src="images/img_07.png" alt="Digital return receipt" style="height:260px;width:auto;display:block;margin:0 auto;border-radius:4px;"></div><div class="g-cap">Digital return receipt</div></div>
+                </div>
+
+                <div class="phase"><span class="phase-num">06</span><span class="phase-title">Outcome & Impact</span><span class="phase-sys">SYS.RESULTS</span></div>
+                <p>The consolidated system has shipped and is live across all stores. Feature parity with the legacy platform has been achieved. The only remaining piece of the vision still in progress is the full "Start Online Return In Store" customer experience. Everything else — from the single associate system to product search to RTV improvements — is in production today.</p>
+                <p>The vision outlived my time on the project because it was built on durable foundations: executive buy-in earned through clear artifacts, cross-team alignment forged in stakeholder workshops, and a phased roadmap that let leadership see progress come to fruition in real time.</p>
+                <div class="metrics">
+                    <div class="metric"><div class="metric-val">34%</div><div class="metric-label">Latency Reduction</div><div class="metric-ctx">Avg transaction down to 54 sec from 2.5 min</div></div>
+                    <div class="metric"><div class="metric-val">90%</div><div class="metric-label">Adoption Rate</div><div class="metric-ctx">Across 2,335 stores</div></div>
+                    <div class="metric"><div class="metric-val">96%</div><div class="metric-label">CSAT Score</div><div class="metric-ctx">Customer satisfaction</div></div>
+                    <div class="metric"><div class="metric-val">~50%</div><div class="metric-label">Refund Time</div><div class="metric-ctx">Cut to 4 days avg, down from ~8</div></div>
+                </div>
+                
+                <div class="cs-next" onclick="requestPW('pickup')"><div class="cs-next-label">Next Case Study</div><div class="cs-next-title">Store Pickup Strategy →</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CS: PICKUP (PROTECTED) ===== -->
+    <div class="page" id="page-cs-pickup">
+        <div class="cs-page">
+            <div class="cs-hero-section">
+                <a class="cs-back" onclick="goTo('work')">Back</a>
+                <p class="section-label">// Case Study 02</p>
+                <h1>Store Pickup — Customer & Associate Strategy</h1>
+                <p class="lead">Designing for two converging user types with competing needs across mobile, in-store, and operational touchpoints.</p>
+                <div class="cs-meta">
+                    <div><div class="cs-meta-label">Role</div><div class="cs-meta-value">Lead Product Designer</div></div>
+                    <div><div class="cs-meta-label">Duration</div><div class="cs-meta-value">[ Timeline ]</div></div>
+                    <div><div class="cs-meta-label">Team</div><div class="cs-meta-value">[ Team ]</div></div>
+                    <div><div class="cs-meta-label">Impact</div><div class="cs-meta-value">[ Metric ]</div></div>
+                </div>
+            </div>
+            <div class="cs-body">
+                <div class="phase"><span class="phase-num">01</span><span class="phase-title">The Problem</span><span class="phase-sys">SYS.ANALYSIS</span></div>
+                <p>[ Coordinating customer expectations with associate workflows. ]</p>
+                <div class="metrics">
+                    <div class="metric"><div class="metric-val">[ X ]</div><div class="metric-label">Wait Time</div><div class="metric-ctx">[ Context ]</div></div>
+                    <div class="metric"><div class="metric-val">[ X ]</div><div class="metric-label">[ Metric ]</div><div class="metric-ctx">[ Context ]</div></div>
+                    <div class="metric"><div class="metric-val">[ X ]</div><div class="metric-label">[ Metric ]</div><div class="metric-ctx">[ Context ]</div></div>
+                </div>
+                <div class="phase"><span class="phase-num">02</span><span class="phase-title">Discovery</span><span class="phase-sys">SYS.RECON</span></div>
+                <p>[ Research approach. ]</p>
+                <div class="img-block tall"><span>[ Service blueprint ] — 1408×800 @2x</span><div class="img-sys">IMG.001 // BLUEPRINT</div></div>
+                <div class="phase"><span class="phase-num">03</span><span class="phase-title">Two Users, One Moment</span><span class="phase-sys">SYS.PROFILE</span></div>
+                <p>[ Competing needs and friction. ]</p>
+                <div class="personas">
+                    <div class="persona pa"><div class="persona-type ta">Customer</div><h4>The Customer</h4><div class="p-role">[ Type ]</div><ul><li>[ Need ]</li><li>[ Need ]</li><li>[ Frustration ]</li></ul></div>
+                    <div class="persona pb"><div class="persona-type tb">Operator</div><h4>The Associate</h4><div class="p-role">[ Role ]</div><ul><li>[ Need ]</li><li>[ Need ]</li><li>[ Constraint ]</li></ul></div>
+                </div>
+                <div class="insight"><p>[ Key insight about the synchronization gap. ]</p><cite>— Research finding</cite></div>
+                <div class="phase"><span class="phase-num">04</span><span class="phase-title">Strategy</span><span class="phase-sys">SYS.STRATEGY</span></div>
+                <p>[ Reconciling competing needs. ]</p>
+                <div class="process">
+                    <div class="process-step"><div class="ps-num">01</div><div class="ps-title">[ Step ]</div><div class="ps-desc">[ Desc ]</div></div>
+                    <div class="process-step"><div class="ps-num">02</div><div class="ps-title">[ Step ]</div><div class="ps-desc">[ Desc ]</div></div>
+                    <div class="process-step"><div class="ps-num">03</div><div class="ps-title">[ Step ]</div><div class="ps-desc">[ Desc ]</div></div>
+                    <div class="process-step"><div class="ps-num">04</div><div class="ps-title">[ Step ]</div><div class="ps-desc">[ Desc ]</div></div>
+                </div>
+                <div class="phase"><span class="phase-num">05</span><span class="phase-title">Design</span><span class="phase-sys">SYS.BUILD</span></div>
+                <p>[ Key design decisions. ]</p>
+                <div class="gallery two">
+                    <div class="g-item"><div class="g-visual"><span>[ Customer mobile ] — 702×400 @2x</span></div><div class="g-cap">Status flow</div></div>
+                    <div class="g-item"><div class="g-visual"><span>[ Associate tool ] — 702×400 @2x</span></div><div class="g-cap">Task management</div></div>
+                </div>
+                <div class="phase"><span class="phase-num">06</span><span class="phase-title">Outcome</span><span class="phase-sys">SYS.RESULTS</span></div>
+                <p>[ Results. ]</p>
+                <div class="metrics">
+                    <div class="metric"><div class="metric-val">[ X% ]</div><div class="metric-label">[ Metric ]</div><div class="metric-ctx">[ Context ]</div></div>
+                    <div class="metric"><div class="metric-val">[ X% ]</div><div class="metric-label">[ Metric ]</div><div class="metric-ctx">[ Context ]</div></div>
+                </div>
+                <div class="cs-next" onclick="requestPW('pro')"><div class="cs-next-label">Next Case Study</div><div class="cs-next-title">Pro Fulfillment Hub Strategy →</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== CS: PRO (PROTECTED) ===== -->
+    <div class="page" id="page-cs-pro">
+        <div class="cs-page">
+            <div class="cs-hero-section">
+                <a class="cs-back" onclick="goTo('work')">Back</a>
+                <p class="section-label">// Case Study 03</p>
+                <h1>Pro Fulfillment Hub Strategy</h1>
+                <p class="lead">Designing the operational backbone for specialized fulfillment at scale.</p>
+                <div class="cs-meta">
+                    <div><div class="cs-meta-label">Role</div><div class="cs-meta-value">Lead Product Designer</div></div>
+                    <div><div class="cs-meta-label">Duration</div><div class="cs-meta-value">[ Timeline ]</div></div>
+                    <div><div class="cs-meta-label">Team</div><div class="cs-meta-value">[ Team ]</div></div>
+                    <div><div class="cs-meta-label">Impact</div><div class="cs-meta-value">[ Metric ]</div></div>
+                </div>
+            </div>
+            <div class="cs-body">
+                <div class="phase"><span class="phase-num">01</span><span class="phase-title">The Problem</span><span class="phase-sys">SYS.ANALYSIS</span></div>
+                <p>[ Specialized fulfillment complexity. ]</p>
+                <div class="metrics">
+                    <div class="metric"><div class="metric-val">[ X ]</div><div class="metric-label">[ Scale ]</div><div class="metric-ctx">[ Context ]</div></div>
+                    <div class="metric"><div class="metric-val">[ X ]</div><div class="metric-label">[ Pain ]</div><div class="metric-ctx">[ Context ]</div></div>
+                    <div class="metric"><div class="metric-val">[ X ]</div><div class="metric-label">[ Complexity ]</div><div class="metric-ctx">[ Context ]</div></div>
+                </div>
+                <div class="phase"><span class="phase-num">02</span><span class="phase-title">Discovery</span><span class="phase-sys">SYS.RECON</span></div>
+                <p>[ Research approach. ]</p>
+                <div class="two-col">
+                    <div class="col"><h4>Methods</h4><ul><li>[ Hub observations ]</li><li>[ Pro interviews ]</li><li>[ Operator shadowing ]</li></ul></div>
+                    <div class="col"><h4>Discoveries</h4><ul><li>[ Gap ]</li><li>[ Workarounds ]</li><li>[ Mismatch ]</li></ul></div>
+                </div>
+                <div class="img-block tall"><span>[ Ecosystem map ] — 1408×800 @2x</span><div class="img-sys">IMG.001 // ECOSYSTEM</div></div>
+                <div class="phase"><span class="phase-num">03</span><span class="phase-title">Context</span><span class="phase-sys">SYS.PROFILE</span></div>
+                <p>[ The hub environment. ]</p>
+                <div class="personas">
+                    <div class="persona pa"><div class="persona-type ta">Operator</div><h4>[ Hub Operator ]</h4><div class="p-role">[ Role ]</div><ul><li>[ Need ]</li><li>[ Constraint ]</li><li>[ Pain ]</li></ul></div>
+                    <div class="persona pb"><div class="persona-type tb">Customer</div><h4>[ Pro Customer ]</h4><div class="p-role">[ Type ]</div><ul><li>[ Speed ]</li><li>[ Complexity ]</li><li>[ Stakes ]</li></ul></div>
+                </div>
+                <div class="insight"><p>[ Key insight about fulfillment impact. ]</p><cite>— Research finding</cite></div>
+                <div class="phase"><span class="phase-num">04</span><span class="phase-title">Architecture</span><span class="phase-sys">SYS.STRATEGY</span></div>
+                <p>[ System design. ]</p>
+                <div class="process">
+                    <div class="process-step"><div class="ps-num">01</div><div class="ps-title">[ Intake ]</div><div class="ps-desc">[ Desc ]</div></div>
+                    <div class="process-step"><div class="ps-num">02</div><div class="ps-title">[ Allocation ]</div><div class="ps-desc">[ Desc ]</div></div>
+                    <div class="process-step"><div class="ps-num">03</div><div class="ps-title">[ Staging ]</div><div class="ps-desc">[ Desc ]</div></div>
+                    <div class="process-step"><div class="ps-num">04</div><div class="ps-title">[ Dispatch ]</div><div class="ps-desc">[ Desc ]</div></div>
+                </div>
+                <div class="phase"><span class="phase-num">05</span><span class="phase-title">Design</span><span class="phase-sys">SYS.BUILD</span></div>
+                <p>[ Key decisions. ]</p>
+                <div class="ba">
+                    <div class="ba-panel"><div class="ba-label before">Before</div><div class="ba-visual"><span>[ Old ] — 488×396 @2x</span></div><p class="ba-text">[ Pain ]</p></div>
+                    <div class="ba-arrow">→</div>
+                    <div class="ba-panel"><div class="ba-label after">After</div><div class="ba-visual"><span>[ New ] — 488×396 @2x</span></div><p class="ba-text">[ Better ]</p></div>
+                </div>
+                <div class="gallery three">
+                    <div class="g-item"><div class="g-visual"><span>[ Dashboard ] — 468×400 @2x</span></div><div class="g-cap">Queue</div></div>
+                    <div class="g-item"><div class="g-visual"><span>[ Detail ] — 468×400 @2x</span></div><div class="g-cap">Tracking</div></div>
+                    <div class="g-item"><div class="g-visual"><span>[ Handoff ] — 468×400 @2x</span></div><div class="g-cap">Coordination</div></div>
+                </div>
+                <div class="phase"><span class="phase-num">06</span><span class="phase-title">Outcome</span><span class="phase-sys">SYS.RESULTS</span></div>
+                <p>[ Results. ]</p>
+                <div class="metrics">
+                    <div class="metric"><div class="metric-val">[ X% ]</div><div class="metric-label">[ Efficiency ]</div><div class="metric-ctx">[ Context ]</div></div>
+                    <div class="metric"><div class="metric-val">[ X% ]</div><div class="metric-label">[ Errors ]</div><div class="metric-ctx">[ Context ]</div></div>
+                    <div class="metric"><div class="metric-val">[ X% ]</div><div class="metric-label">[ Satisfaction ]</div><div class="metric-ctx">[ Context ]</div></div>
+                </div>
+                <div class="cs-next" onclick="goTo('work')"><div class="cs-next-label">Back to</div><div class="cs-next-title">All Work →</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== PASSWORD MODAL ===== -->
+    <div class="pw-overlay" id="pwOverlay">
+        <div class="pw-box">
+            <button class="pw-close" onclick="closePW()">✕</button>
+            <div class="pw-sys">SYS.AUTH // ACCESS REQUIRED</div>
+            <h3>Protected Work</h3>
+            <p class="pw-desc">This case study contains sensitive work under NDA. Enter the password to continue.</p>
+            <div class="pw-input-wrap">
+                <input type="password" class="pw-input" id="pwInput" placeholder="Enter password" onkeydown="if(event.key==='Enter')submitPW()">
+            </div>
+            <button class="pw-submit" onclick="submitPW()">Authenticate</button>
+            <div class="pw-error" id="pwError">ACCESS DENIED — Invalid password</div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2025 Andrew Walker</p>
+        <span class="footer-center">END//TRANSMISSION</span>
+        <p>Built with intention.</p>
+    </footer>
+
+    <script>
+        // ===== PASSWORD CONFIG =====
+        // Change this password to whatever you want to share with recruiters
+        const SITE_PASSWORD = 'anduril2025';
+        let authenticated = false;
+        let pendingTarget = null;
+
+        // ===== NAVIGATION =====
+        function goTo(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // Show target
+            const target = document.getElementById('page-' + pageId);
+            if (target) { target.classList.add('active'); }
+            // Update nav
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+            const navMap = { 'work': 'nav-work', 'about': 'nav-about', 'contact': 'nav-contact' };
+            if (navMap[pageId]) document.getElementById(navMap[pageId])?.classList.add('active');
+            // For case studies, highlight Work
+            if (pageId.startsWith('cs-')) document.getElementById('nav-work')?.classList.add('active');
+            window.scrollTo(0, 0);
+            document.getElementById('navLinks').classList.remove('open');
+        }
+
+        // ===== PASSWORD SYSTEM =====
+        function requestPW(csId) {
+            if (authenticated) {
+                goTo('cs-' + csId);
+                return;
+            }
+            pendingTarget = csId;
+            document.getElementById('pwOverlay').classList.add('show');
+            document.getElementById('pwInput').value = '';
+            document.getElementById('pwError').classList.remove('show');
+            setTimeout(() => document.getElementById('pwInput').focus(), 100);
+        }
+
+        function submitPW() {
+            const input = document.getElementById('pwInput').value;
+            if (input === SITE_PASSWORD) {
+                authenticated = true;
+                closePW();
+                if (pendingTarget) goTo('cs-' + pendingTarget);
+            } else {
+                document.getElementById('pwError').classList.add('show');
+                document.getElementById('pwInput').value = '';
+                document.getElementById('pwInput').focus();
+            }
+        }
+
+        function closePW() {
+            document.getElementById('pwOverlay').classList.remove('show');
+            pendingTarget = null;
+        }
+
+        // Close on overlay click
+        document.getElementById('pwOverlay').addEventListener('click', function(e) {
+            if (e.target === this) closePW();
+        });
+
+        // Escape to close
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') closePW();
+        });
+
+        // ===== MOBILE NAV =====
+        function toggleNav() { document.getElementById('navLinks').classList.toggle('open'); }
+    </script>
+</body>
+</html>
